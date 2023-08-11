@@ -4,9 +4,13 @@ import { FastifyPluginAsync, FastifyServerOptions } from "fastify";
 
 export interface AppOptions
   extends FastifyServerOptions,
-    Partial<AutoloadPluginOptions> {}
+    Partial<AutoloadPluginOptions> {
+  customPort?: number;
+}
 // Pass --options via CLI arguments in command to enable these options.
-const options: AppOptions = {};
+const options: AppOptions = {
+  customPort: parseInt(process.env.PORT || "3000"),
+};
 
 const app: FastifyPluginAsync<AppOptions> = async (
   fastify,
