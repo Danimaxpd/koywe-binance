@@ -13,3 +13,8 @@ services:
       MYSQL_DATABASE: ${DATABASE_PASSWORD}
     ports:
       - "${DATABASE_PORT}:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+
+volumes:
+  db_data:
