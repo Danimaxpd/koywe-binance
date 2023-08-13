@@ -64,9 +64,9 @@ export default class BinanceTradeService
    * @param {number} [options.limit]
    * @param {number} [options.recvWindow] - The value cannot be greater than 60000
    */
-  public async getUserTrades(): Promise<any> {
+  public async getUserTrades(symbol: string): Promise<any> {
     try {
-      const response = await this.binanceClientSpot.myTrades("BNBUSDT");
+      const response = await this.binanceClientSpot.myTrades(symbol);
       console.log(response.data);
       return response.data;
     } catch (error) {

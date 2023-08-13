@@ -29,7 +29,7 @@ export interface CancelOrderOptions {
 
 export interface BinanceTradeServiceInterface {
   getAccountInfo(): Promise<any>;
-  getUserTrades(): Promise<any>;
+  getUserTrades(symbol: string): Promise<any>;
   getC2cTradeHistory(
     tradeType: string,
     options: C2CTradeHistoryOptions

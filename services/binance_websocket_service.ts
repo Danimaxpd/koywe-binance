@@ -4,8 +4,6 @@ export default class BinanceWebSocketService {
   private binanceClientWebsocketStream: typeof WebsocketStream;
   private binanceClientWebsocketAPI: typeof WebsocketAPI;
 
-  constructor() {}
-
   public connectWebSocketStream(): typeof WebsocketStream {
     const callbacks = {
       open: () => console.debug("Connected with Websocket server"),
@@ -19,8 +17,12 @@ export default class BinanceWebSocketService {
   }
 
   public disconnectWebSocketStream(): void {
-    this.binanceClientWebsocketStream.disconnect();
-    console.info("Disconnected from websocket stream");
+    if (this.binanceClientWebsocketStream) {
+      this.binanceClientWebsocketStream.disconnect();
+      console.info("Disconnected from Websocket stream");
+    } else {
+      console.warn("No active Websocket stream to disconnect");
+    }
   }
 
   public connectWebSocketAPI(): typeof WebsocketAPI {
@@ -43,7 +45,11 @@ export default class BinanceWebSocketService {
   }
 
   public disconnectWebSocketAPI(): void {
-    this.binanceClientWebsocketAPI.disconnect();
-    console.info("Disconnected from websocket API");
+    if (this.binanceClientWebsocketAPI) {
+      this.binanceClientWebsocketAPI.disconnect();
+      console.info("Disconnected from Websocket API");
+    } else {
+      console.warn("No active Websocket API connection to disconnect");
+    }
   }
 }
