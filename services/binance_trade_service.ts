@@ -5,6 +5,7 @@ import {
   BinanceTradeServiceInterface,
   NewOrderRequestBody,
   CancelOrderRequestBody,
+  UserTradesRequestQuery,
 } from "../interfaces/binance_trade_service";
 
 export default class BinanceTradeService
@@ -62,8 +63,9 @@ export default class BinanceTradeService
    * @param {number} [options.limit]
    * @param {number} [options.recvWindow] - The value cannot be greater than 60000
    */
-  public async getUserTrades(symbol: string) {
+  public async getUserTrades(requestQuery: UserTradesRequestQuery) {
     try {
+      const { symbol } = requestQuery;
       if (!symbol) {
         throw new Error("symbol is empty");
       }
@@ -132,15 +134,27 @@ export default class BinanceTradeService
    * @param {string} [options.origClientOrderId]
    * @param {string} [options.newClientOrderId]
    * @param {number} [options.recvWindow] - The value cannot be greater than 60000
+   * 
+   * Order status
+
+    The order only can be cancelled if it’s status is NEW or PARTIALLY_FILLED
+    The order in other status like FILLED, CANCELED, etc can NOT be cancelled.
+
    */
 
   public async cancelOrder(requestBody: CancelOrderRequestBody) {
     try {
-      const { symbol, options } = requestBody;
+      const { symbol, options = {} } = requestBody;
       if (!symbol) {
         throw new Error("symbol is empty");
       }
-
+      // Added 59999 to avoid Error 1021  Timestamp for this request is outside of the recvWindow
+      options.recvWindow = 59999;
+      const res = await this.binanceClientSpot.getOrder(symbol, options);
+      // The order in other status like FILLED, CANCELED, etc can NOT be cancelled.
+      if (res.data.status === "FILLED" || res.data.status === "CANCELED") {
+        throw new Error(`Order ${res.data.orderId} is ${res.data.status}`);
+      }
       const { data } = await this.binanceClientSpot.cancelOrder(
         symbol,
         options

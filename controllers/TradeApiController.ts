@@ -4,24 +4,25 @@ import {
   BinanceTradeServiceInterface,
   NewOrderRequestBody,
   CancelOrderRequestBody,
+  UserTradesRequestQuery,
 } from "../interfaces/binance_trade_service";
 import { env } from "../helpers/global_const";
 
 export class tradeApiController {
   private binanceTradeService!: BinanceTradeServiceInterface;
 
-  constructor(reply: FastifyReply) {
-    this.initBinanceTradeService(reply);
+  constructor() {
+    this.initBinanceTradeService();
   }
 
-  initBinanceTradeService(reply: FastifyReply) {
+  initBinanceTradeService() {
     try {
       this.binanceTradeService = new BinanceTradeService(
         env.BINANCE_API_KEY,
         env.BINANCE_SECRET_KEY
       );
     } catch (error) {
-      reply.status(400).send(error);
+      throw new Error(`Failed to initialize BinanceTradeService: ${error}`);
     }
   }
 
@@ -33,9 +34,15 @@ export class tradeApiController {
     }
   }
 
-  async getUserTrades(reply: FastifyReply) {
+  async getUserTrades(request: FastifyRequest, reply: FastifyReply) {
     try {
-      reply.status(200).send(await this.binanceTradeService.getAccountInfo());
+      reply
+        .status(200)
+        .send(
+          await this.binanceTradeService.getUserTrades(
+            request.query as UserTradesRequestQuery
+          )
+        );
     } catch (error) {
       reply.status(400).send(error);
     }

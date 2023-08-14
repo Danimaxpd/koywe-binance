@@ -29,15 +29,19 @@ export interface NewOrderRequestBody {
 
 export interface CancelOrderRequestBody {
   symbol: string;
-  side: string;
-  type: string;
   options?: CancelOrderOptions;
+}
+
+export interface UserTradesRequestQuery {
+  symbol: string;
 }
 
 // BinanceTradeServiceInterface
 export interface BinanceTradeServiceInterface {
   getAccountInfo(): Promise<AccountInfo | Error | undefined>;
-  getUserTrades(symbol: string): Promise<UserTrades | Error | undefined>;
+  getUserTrades(
+    requestQuery: UserTradesRequestQuery
+  ): Promise<UserTrades | Error | undefined>;
   setNewOrder(
     requestBody: NewOrderRequestBody
   ): Promise<Order | Error | undefined>;
