@@ -114,11 +114,7 @@ export default class BinanceTradeService
       );
       return data;
     } catch (error) {
-      if (error instanceof Spot.InvalidOrderParameters) {
-        console.error("Invalid order parameters:", error);
-      } else {
-        handleError("BinanceTradeService: setNewOrder", error);
-      }
+      handleError("BinanceTradeService: setNewOrder", error);
     }
   }
 
@@ -152,7 +148,7 @@ export default class BinanceTradeService
       options.recvWindow = 59999;
       const res = await this.binanceClientSpot.getOrder(symbol, options);
       // The order in other status like FILLED, CANCELED, etc can NOT be cancelled.
-      if (res.data.status !== "NEW" || res.data.status !== "PARTIALLY_FILLED") {
+      if (res.data.status !== "NEW" && res.data.status !== "PARTIALLY_FILLED") {
         throw new Error(`Order ${res.data.orderId} is ${res.data.status}`);
       }
       const { data } = await this.binanceClientSpot.cancelOrder(
