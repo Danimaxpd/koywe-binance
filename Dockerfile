@@ -12,9 +12,10 @@ RUN npm install
 
 # Copy the rest of the application code
 COPY . .
-
+# Generate Prisma Client
+RUN npx prisma generate
 # Expose the port your Fastify app is listening on
 EXPOSE ${PORT:-3000}
 
 # Start the Fastify app
-CMD [ "sh", "-c", "npm run dev:start" ]
+CMD [ "sh", "-c", "npm run dev" ]
