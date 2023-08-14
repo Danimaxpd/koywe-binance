@@ -13,13 +13,6 @@ export interface NewOrderOptions {
   recvWindow?: number;
 }
 
-export interface C2CTradeHistoryOptions {
-  startTimestamp?: number;
-  endTimestamp?: number;
-  page?: number;
-  rows?: number;
-  recvWindow?: number;
-}
 export interface CancelOrderOptions {
   orderId?: number;
   origClientOrderId?: string;
@@ -27,20 +20,32 @@ export interface CancelOrderOptions {
   recvWindow?: number;
 }
 
-export interface BinanceTradeServiceInterface {
-  getAccountInfo(): Promise<AccountInfo>;
-  getUserTrades(symbol: string): Promise<UserTrades>;
-  setNewOrder(
-    symbol: string,
-    side: string,
-    type: string,
-    options: NewOrderOptions
-  ): Promise<Order>;
-  cancelOrder(
-    symbol: string,
-    options: CancelOrderOptions
-  ): Promise<OrderCancellationResponse>;
+export interface NewOrderRequestBody {
+  symbol: string;
+  side: string;
+  type: string;
+  options?: NewOrderOptions;
 }
+
+export interface CancelOrderRequestBody {
+  symbol: string;
+  side: string;
+  type: string;
+  options?: CancelOrderOptions;
+}
+
+// BinanceTradeServiceInterface
+export interface BinanceTradeServiceInterface {
+  getAccountInfo(): Promise<AccountInfo | Error | undefined>;
+  getUserTrades(symbol: string): Promise<UserTrades | Error | undefined>;
+  setNewOrder(
+    requestBody: NewOrderRequestBody
+  ): Promise<Order | Error | undefined>;
+  cancelOrder(
+    requestBody: CancelOrderRequestBody
+  ): Promise<OrderCancellationResponse | Error | undefined>;
+}
+
 /** Responses interfaces **/
 interface Balance {
   asset: string;
@@ -98,7 +103,7 @@ interface OrderFill {
   tradeId: number;
 }
 
-interface Order {
+export interface Order {
   symbol: string;
   orderId: number;
   orderListId: number | -1; // Unless OCO, the value will always be -1

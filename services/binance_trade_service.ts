@@ -1,17 +1,17 @@
 const { Spot } = require("@binance/connector");
 import { handleError } from "../helpers/handle_errors";
-import { BINANCE_URL_DOMAIN } from "../helpers/global_const";
+import { env } from "../helpers/global_const";
 import {
   BinanceTradeServiceInterface,
-  NewOrderOptions,
-  CancelOrderOptions,
+  NewOrderRequestBody,
+  CancelOrderRequestBody,
 } from "../interfaces/binance_trade_service";
 
 export default class BinanceTradeService
   implements BinanceTradeServiceInterface
 {
   private binanceClientSpot;
-  private baseUrl = BINANCE_URL_DOMAIN;
+  private baseUrl = env.BINANCE_URL_DOMAIN;
   private apiKey: string = "";
   private apiSecret: string = "";
 
@@ -97,13 +97,9 @@ export default class BinanceTradeService
    * @param {number} [options.recvWindow] - The value cannot be greater than 60000
    */
 
-  public async setNewOrder(
-    symbol: string,
-    side: string,
-    type: string,
-    options: NewOrderOptions
-  ) {
+  public async setNewOrder(requestBody: NewOrderRequestBody) {
     try {
+      const { symbol, side, type, options } = requestBody;
       if (!symbol || !side || !type) {
         throw new Error("symbol or side or type is empty");
       }
@@ -138,8 +134,9 @@ export default class BinanceTradeService
    * @param {number} [options.recvWindow] - The value cannot be greater than 60000
    */
 
-  public async cancelOrder(symbol: string, options: CancelOrderOptions) {
+  public async cancelOrder(requestBody: CancelOrderRequestBody) {
     try {
+      const { symbol, options } = requestBody;
       if (!symbol) {
         throw new Error("symbol is empty");
       }
