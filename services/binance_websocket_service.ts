@@ -8,7 +8,7 @@ export default class BinanceWebSocketService {
     const callbacks = {
       open: () => console.debug("Connected with Websocket server"),
       close: () => console.debug("Disconnected with Websocket server"),
-      message: (data) => console.info(data),
+      message: (data: any) => console.info(data),
     };
 
     this.binanceClientWebsocketStream = new WebsocketStream({ callbacks });
@@ -27,14 +27,14 @@ export default class BinanceWebSocketService {
 
   public connectWebSocketAPI(): typeof WebsocketAPI {
     const callbacks = {
-      open: (client) => {
+      open: (client: any) => {
         console.debug("Connected with Websocket server");
         // send message to get orderbook info after connection open
         client.orderbook("BTCUSDT");
         client.orderbook("BNBUSDT", { limit: 10 });
       },
       close: () => console.debug("Disconnected with Websocket server"),
-      message: (data) => console.info(data),
+      message: (data: any) => console.info(data),
     };
 
     this.binanceClientWebsocketAPI = new WebsocketAPI(null, null, {
