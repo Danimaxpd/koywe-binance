@@ -152,7 +152,7 @@ export default class BinanceTradeService
       options.recvWindow = 59999;
       const res = await this.binanceClientSpot.getOrder(symbol, options);
       // The order in other status like FILLED, CANCELED, etc can NOT be cancelled.
-      if (res.data.status === "FILLED" || res.data.status === "CANCELED") {
+      if (res.data.status !== "NEW" || res.data.status !== "PARTIALLY_FILLED") {
         throw new Error(`Order ${res.data.orderId} is ${res.data.status}`);
       }
       const { data } = await this.binanceClientSpot.cancelOrder(
