@@ -4,6 +4,8 @@
     "target": "es2017",
     "module": "commonjs",
     "outDir": "./dist",
+    "declaration": true,
+    "declarationDir": "./dist/types",
     "rootDir": "./",
     "strict": true,
     "esModuleInterop": true,
@@ -11,5 +13,5 @@
     "skipLibCheck": true
   },
   "include": ["./**/*.ts"],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", "./dist/**/*"]
 }
