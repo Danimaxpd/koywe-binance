@@ -4,12 +4,8 @@ import { BINANCE_URL_DOMAIN } from "../helpers/global_const";
 import {
   BinanceTradeServiceInterface,
   NewOrderOptions,
-  C2CTradeHistoryOptions,
   CancelOrderOptions,
-  TradeTypeEnum,
 } from "../interfaces/binance_trade_service";
-
-// @TODO Change the promise<any> to the correct type
 
 export default class BinanceTradeService
   implements BinanceTradeServiceInterface
@@ -24,6 +20,10 @@ export default class BinanceTradeService
     this.apiSecret = ApiSecret;
 
     try {
+      if (!ApiKey || !ApiSecret) {
+        throw new Error("BinanceTradeService: ApiKey or ApiSecret is empty");
+      }
+
       this.binanceClientSpot = new Spot(this.apiKey, this.apiSecret, {
         baseURL: this.baseUrl,
       });
@@ -38,15 +38,13 @@ export default class BinanceTradeService
    *
    * {@link https://binance-docs.github.io/apidocs/spot/en/#account-information-user_data}
    *
-   * @param {object} [options]
-   * @param {number} [options.recvWindow] - The value cannot be greater than 60000
    */
   public async getAccountInfo() {
     try {
-      const response = await this.binanceClientSpot.account();
-      console.log(response.data);
+      const { data } = await this.binanceClientSpot.account();
+      return data;
     } catch (error) {
-      handleError("getAccountInfo", error);
+      handleError("BinanceTradeService: getAccountInfo", error);
     }
   }
   /**
@@ -64,44 +62,15 @@ export default class BinanceTradeService
    * @param {number} [options.limit]
    * @param {number} [options.recvWindow] - The value cannot be greater than 60000
    */
-  public async getUserTrades(symbol: string): Promise<any> {
+  public async getUserTrades(symbol: string) {
     try {
-      const response = await this.binanceClientSpot.myTrades(symbol);
-      console.log(response.data);
-      return response.data;
+      if (!symbol) {
+        throw new Error("symbol is empty");
+      }
+      const { data } = await this.binanceClientSpot.myTrades(symbol);
+      return data;
     } catch (error) {
-      handleError("getUserTrades", error);
-    }
-  }
-  /**
-   * Get C2C Trade History (USER_DATA)<br>
-   *
-   *
-   * {@link https://binance-docs.github.io/apidocs/spot/en/#get-c2c-trade-history-user_data}
-   *
-   * @param {string} tradeType - BUY, SELL
-   * @param {object} [options]
-   * @param {number} [options.startTimestamp] - The max interval between startTimestamp and endTimestamp is 30 days.<br>
-   *     If startTimestamp and endTimestamp are not sent, the recent 30-day data will be returned.
-   * @param {number} [options.endTimestamp]
-   * @param {number} [options.page] - default 1
-   * @param {number} [options.rows] - default 100, max 100
-   * @param {number} [options.recvWindow]
-   *
-   */
-  public async getC2cTradeHistory(
-    TradeType: TradeTypeEnum,
-    options: C2CTradeHistoryOptions = {}
-  ): Promise<any> {
-    try {
-      const response = await this.binanceClientSpot.c2cTradeHistory(
-        TradeType,
-        options
-      );
-      console.log("getC2cTradeHistory", response.data);
-      return response.data;
-    } catch (error) {
-      handleError("getC2cTradeHistory", error);
+      handleError("BinanceTradeService: getUserTrades", error);
     }
   }
   /**
@@ -133,21 +102,24 @@ export default class BinanceTradeService
     side: string,
     type: string,
     options: NewOrderOptions
-  ): Promise<any> {
+  ) {
     try {
-      const response = await this.binanceClientSpot.newOrder(
+      if (!symbol || !side || !type) {
+        throw new Error("symbol or side or type is empty");
+      }
+
+      const { data } = await this.binanceClientSpot.newOrder(
         symbol,
         side,
         type,
         options
       );
-      console.log("setNewOrder", response.data);
-      return response.data;
+      return data;
     } catch (error) {
       if (error instanceof Spot.InvalidOrderParameters) {
         console.error("Invalid order parameters:", error);
       } else {
-        handleError("setNewOrder", error);
+        handleError("BinanceTradeService: setNewOrder", error);
       }
     }
   }
@@ -155,7 +127,6 @@ export default class BinanceTradeService
   /**
    * Cancel Order (TRADE)<br>
    *
-   * DELETE /api/v3/order<br>
    *
    * {@link https://binance-docs.github.io/apidocs/spot/en/#cancel-order-trade}
    *
@@ -167,19 +138,19 @@ export default class BinanceTradeService
    * @param {number} [options.recvWindow] - The value cannot be greater than 60000
    */
 
-  public async cancelOrder(
-    symbol: string,
-    options: CancelOrderOptions
-  ): Promise<any> {
+  public async cancelOrder(symbol: string, options: CancelOrderOptions) {
     try {
-      const response = await this.binanceClientSpot.cancelOrder(
+      if (!symbol) {
+        throw new Error("symbol is empty");
+      }
+
+      const { data } = await this.binanceClientSpot.cancelOrder(
         symbol,
         options
       );
-      console.log("cancelOrder", response.data);
-      return response.data;
+      return data;
     } catch (error) {
-      handleError("cancelOrder", error);
+      handleError("BinanceTradeService: cancelOrder", error);
     }
   }
 }

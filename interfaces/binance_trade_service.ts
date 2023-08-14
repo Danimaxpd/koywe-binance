@@ -28,22 +28,109 @@ export interface CancelOrderOptions {
 }
 
 export interface BinanceTradeServiceInterface {
-  getAccountInfo(): Promise<any>;
-  getUserTrades(symbol: string): Promise<any>;
-  getC2cTradeHistory(
-    tradeType: string,
-    options: C2CTradeHistoryOptions
-  ): Promise<any>;
+  getAccountInfo(): Promise<AccountInfo>;
+  getUserTrades(symbol: string): Promise<UserTrades>;
   setNewOrder(
     symbol: string,
     side: string,
     type: string,
     options: NewOrderOptions
-  ): Promise<any>;
-  cancelOrder(symbol: string, options: CancelOrderOptions): Promise<any>;
+  ): Promise<Order>;
+  cancelOrder(
+    symbol: string,
+    options: CancelOrderOptions
+  ): Promise<OrderCancellationResponse>;
+}
+/** Responses interfaces **/
+interface Balance {
+  asset: string;
+  free: string;
+  locked: string;
 }
 
-export enum TradeTypeEnum {
-  BUY = "BUY",
-  SELL = "SELL",
+interface CommissionRates {
+  maker: string;
+  taker: string;
+  buyer: string;
+  seller: string;
+}
+
+interface AccountInfo {
+  makerCommission: number;
+  takerCommission: number;
+  buyerCommission: number;
+  sellerCommission: number;
+  commissionRates: CommissionRates;
+  canTrade: boolean;
+  canWithdraw: boolean;
+  canDeposit: boolean;
+  brokered: boolean;
+  requireSelfTradePrevention: boolean;
+  preventSor: boolean;
+  updateTime: number;
+  accountType: string;
+  balances: Balance[];
+  permissions: string[];
+  uid: bigint;
+}
+
+interface UserTrades {
+  symbol: string;
+  id: number;
+  orderId: number;
+  orderListId: number | -1; // Unless OCO, the value will always be -1
+  price: string;
+  qty: string;
+  quoteQty: string;
+  commission: string;
+  commissionAsset: string;
+  time: number;
+  isBuyer: boolean;
+  isMaker: boolean;
+  isBestMatch: boolean;
+}
+
+interface OrderFill {
+  price: string;
+  qty: string;
+  commission: string;
+  commissionAsset: string;
+  tradeId: number;
+}
+
+interface Order {
+  symbol: string;
+  orderId: number;
+  orderListId: number | -1; // Unless OCO, the value will always be -1
+  clientOrderId: string;
+  transactTime: number;
+  price: string;
+  origQty: string;
+  executedQty: string;
+  cummulativeQuoteQty: string;
+  status: string;
+  timeInForce: string;
+  type: string;
+  side: string;
+  workingTime: number;
+  selfTradePreventionMode: string;
+  fills: OrderFill[];
+}
+
+interface OrderCancellationResponse {
+  symbol: string;
+  origClientOrderId: string;
+  orderId: number;
+  orderListId: number | -1; // Unless OCO, the value will always be -1
+  clientOrderId: string;
+  transactTime: number;
+  price: string;
+  origQty: string;
+  executedQty: string;
+  cummulativeQuoteQty: string;
+  status: string;
+  timeInForce: string;
+  type: string;
+  side: string;
+  selfTradePreventionMode: string;
 }
