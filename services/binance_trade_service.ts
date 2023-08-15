@@ -112,6 +112,7 @@ export default class BinanceTradeService
         type,
         options
       );
+      console.info("BinanceTradeService: setNewOrder: Ordered", data);
       return data;
     } catch (error) {
       handleError("BinanceTradeService: setNewOrder", error);
