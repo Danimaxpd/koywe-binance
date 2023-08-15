@@ -2,97 +2,148 @@ const { WebsocketStream, WebsocketAPI } = require("@binance/connector");
 import { env } from "../helpers/global_const";
 import { HistoryMarketData } from "../interfaces/strategies";
 import { handleError } from "../helpers/handle_errors";
+import {
+  BinanceWebSocketServiceInterface,
+  tradesStreamConnectRequestQuery,
+  getHistoricalDataRequestQuery,
+  fetchHistoricalTradesRequestQuery,
+} from "../interfaces/binance_web_socket_service";
 
-export default class BinanceWebSocketService {
-  private binanceClientWebsocketStream: typeof WebsocketStream;
-  private binanceClientWebsocketAPI: typeof WebsocketAPI;
-  private historyMarketData!: HistoryMarketData | null;
+export default class BinanceWebSocketService
+  implements BinanceWebSocketServiceInterface
+{
+  private _trade: typeof WebsocketStream;
+  private _historyMarketData!: HistoryMarketData;
+  private cachedCurrencies: {} = {};
+  private lastUpdateTimestamp: number = 0;
+  /**
+   * Trade Streams<br>
+   *
+   * The Trade Streams push raw trade information; each trade has a unique buyer and seller.<br>
+   *
+   * Stream Name: &lt;symbol&gt;@trade <br>
+   * Update Speed: Real-time<br>
+   *
+   * {@link https://binance-docs.github.io/apidocs/spot/en/#trade-streams}
+   *
+   * @param {string} symbol
+   */
+  public tradesStreamConnect(
+    requestQuery: tradesStreamConnectRequestQuery
+  ): typeof WebsocketStream {
+    const symbol = requestQuery.symbol;
 
-  public connectWebSocketStream(): typeof WebsocketStream {
+    if (!symbol) {
+      throw new Error("Symbol is required");
+    }
     const callbacks = {
       open: () => console.debug("Connected with Websocket server"),
       close: () => console.debug("Disconnected with Websocket server"),
       message: (data: any) => console.info(data),
     };
-
-    this.binanceClientWebsocketStream = new WebsocketStream({ callbacks });
-    // subscribe ticker stream
-    return this.binanceClientWebsocketStream.ticker("bnbusdt");
+    if (this._trade) {
+      this.tradesStreamDisconnect();
+    }
+    this._trade = new WebsocketStream({ callbacks });
+    return this._trade.trade(symbol);
   }
 
-  public disconnectWebSocketStream(): void {
-    if (this.binanceClientWebsocketStream) {
-      this.binanceClientWebsocketStream.disconnect();
+  public tradesStreamDisconnect(): void {
+    if (this._trade) {
+      this._trade.disconnect();
       console.info("Disconnected from Websocket stream");
     } else {
       console.warn("No active Websocket stream to disconnect");
     }
   }
-
-  public connectWebSocketAPI(): typeof WebsocketAPI {
-    const callbacks = {
-      open: (client: any) => {
-        console.info("Connected with Websocket server");
-        client.historicalTrades("BNBUSDT", { limit: 10 });
-      },
-      close: () => console.info("Disconnected with Websocket server"),
-      message: (data: any) => console.info(data),
-    };
-    const apiKey = env.BINANCE_API_KEY;
-    this.binanceClientWebsocketAPI = new WebsocketAPI(apiKey, null, {
-      callbacks,
-    });
-    // subscribe ticker stream
-    return this.binanceClientWebsocketAPI.ticker("bnbusdt");
-  }
-
-  public disconnectWebSocketAPI(): void {
-    if (this.binanceClientWebsocketAPI) {
-      this.binanceClientWebsocketAPI.disconnect();
-      console.info("Disconnected from Websocket API");
-    } else {
-      console.warn("No active Websocket API connection to disconnect");
-    }
-  }
-
-  public getHistoryMarketData(symbol: string): HistoryMarketData | null {
-    if (!symbol) {
-      throw new Error("Symbol is required");
-    }
-
-    if (!this.historyMarketData) {
-      this.historyTrades(symbol);
-    }
-    setTimeout(() => {
-      this.historyMarketData = null;
-    }, 3600000);
-
-    return this.historyMarketData;
-  }
-
-  public async historyTrades(symbol: string): Promise<void> {
-    try {
+  /**
+   * Historical trades < br>
+   * Get historical trades cache.<br>
+   * @param {string} symbol
+   */
+  public getHistoricalData(
+    requestQuery: getHistoricalDataRequestQuery
+  ): HistoryMarketData {
+    const symbol = requestQuery.symbol;
+    const currentTime = Date.now();
+    if (
+      !this.cachedCurrencies ||
+      currentTime - this.lastUpdateTimestamp >= 60000
+    ) {
       if (!symbol) {
         throw new Error("Symbol is required");
       }
+      console.log(
+        "!this.cachedCurrencies",
+        !this.cachedCurrencies,
+        this.cachedCurrencies
+      );
+      console.log("this._historyMarketData", this._historyMarketData);
+      if (!this.cachedCurrencies) {
+        try {
+          const requestQuery = { symbol, options: {} };
+          this.fetchHistoricalTrades(requestQuery);
+        } catch (error) {
+          throw new Error("Failed to fetch historical trades");
+        }
+      }
+    }
+
+    return this._historyMarketData;
+  }
+
+  /**
+   * Historical trades < br>
+   *
+   * Get historical trades.<br>
+   *
+   *
+   * {@link https://binance-docs.github.io/apidocs/websocket_api/en/#historical-trades-market_data}
+   *
+   * @param {string} symbol
+   * @param {object} [options]
+   * @param {number} [options.limit]
+   * @param {number} [options.fromId]
+   *
+   */
+  public fetchHistoricalTrades(
+    requestQuery: fetchHistoricalTradesRequestQuery
+  ): void {
+    try {
+      const { symbol, options = { limit: 100 } } = requestQuery;
+      if (!symbol) {
+        throw new Error("Symbol is required");
+      }
+
       const callbacks = {
         open: (client: any) => {
           console.info("Connected with Websocket server");
-          client.historicalTrades(symbol, { limit: 100 });
+          client.historicalTrades(symbol, options);
         },
-        close: () => console.info("Disconnected with Websocket server"),
-        message: (data: any) => (this.historyMarketData = JSON.parse(data)),
+        close: () => {
+          console.info("Disconnected with Websocket server");
+        },
+        message: (data: any) => {
+          try {
+            this._historyMarketData = JSON.parse(data);
+            this.cachedCurrencies = JSON.parse(data);
+          } catch (error) {
+            console.error("Error parsing data:", error);
+          }
+        },
       };
+
       const apiKey = env.BINANCE_API_KEY;
 
-      const websocketAPIClient = await new WebsocketAPI(apiKey, null, {
+      const websocketAPIClient = new WebsocketAPI(apiKey, null, {
         callbacks,
       });
 
-      // disconnect after 20 seconds
-      setTimeout(() => websocketAPIClient.disconnect(), 20000);
+      // Disconnecting after 10 seconds might not always be the best approach.
+      // Consider finding a better event or timeout based on your use-case.
+      setTimeout(() => websocketAPIClient.disconnect(), 10000);
     } catch (error) {
-      handleError("BinanceWebSocketService: historyTrades", error);
+      handleError("BinanceWebSocketService: fetchHistoricalTrades", error);
     }
   }
 }
