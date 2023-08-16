@@ -12,8 +12,10 @@ import {
 
 export class webSocketController {
   private _binanceWebSocketService!: BinanceWebSocketServiceInterface;
+  private _prismaClient!: PrismaClient;
 
   constructor(prismaClient: PrismaClient) {
+    this._prismaClient = prismaClient;
     this._binanceWebSocketService = new BinanceWebSocketService(prismaClient);
   }
 
@@ -98,17 +100,17 @@ export class webSocketController {
       const symbols = symbolStr.split(",");
       const marketData =
         await this._binanceWebSocketService.getHistoricalData();
+      console.info("SYMBOL: ", symbols.length);
+      reply
+        .status(200)
+        .send("Executing Trading Bot for each symbol, check logs for details");
 
       for (let i = 0; i < symbols.length; i++) {
         const symbol = symbols[i];
         console.info("SYMBOL: ", symbol);
-        const bot = new TradingBot(strategies, symbol);
+        const bot = new TradingBot(strategies, symbol, this._prismaClient);
         bot.executeTrade(marketData);
       }
-
-      reply
-        .status(200)
-        .send("Executing Trading Bot for each symbol, check logs for details");
     } catch (error) {
       reply.status(500).send(error);
     }

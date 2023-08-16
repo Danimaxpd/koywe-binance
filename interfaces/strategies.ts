@@ -22,15 +22,18 @@ export interface OrderParameters {
     | "TAKE_PROFIT"
     | "TAKE_PROFIT_LIMIT"
     | "LIMIT_MAKER";
+  side: "BUY" | "SELL";
   symbol: string;
-  timeInForce?: string;
-  quantity?: number;
-  price?: number;
-  quoteOrderQty?: number;
-  stopPrice?: number;
-  trailingDelta?: number;
-  icebergQty?: number;
-  newOrderRespType?: string;
+  options?: {
+    timeInForce?: string;
+    quantity?: number;
+    price?: number;
+    quoteOrderQty?: number;
+    stopPrice?: number;
+    trailingDelta?: number;
+    icebergQty?: number;
+    newOrderRespType?: string;
+  };
 }
 
 export interface TradeEntry {

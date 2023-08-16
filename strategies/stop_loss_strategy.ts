@@ -20,8 +20,11 @@ export class StopLossStrategy implements Strategy {
     const orderParameters: OrderParameters = {
       type: "STOP_LOSS",
       symbol,
-      quantity: data.quantity,
-      stopPrice: stopPrice,
+      side: "SELL",
+      options: {
+        quantity: data.quantity,
+        stopPrice: stopPrice,
+      },
     };
     return orderParameters;
   }

@@ -10,7 +10,6 @@ generator client {
 
 model Trades {
   id        Int      @id @default(autoincrement())
-  trade_id  String   @unique
   timestamp String
   rawData   Json
   createdAt DateTime @default(now())

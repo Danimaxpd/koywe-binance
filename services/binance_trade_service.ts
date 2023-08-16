@@ -105,14 +105,14 @@ export default class BinanceTradeService
       if (!symbol || !side || !type) {
         throw new Error("symbol or side or type is empty");
       }
+      let data;
 
-      const { data } = await this.binanceClientSpot.newOrder(
-        symbol,
-        side,
-        type,
-        options
-      );
+      await this.binanceClientSpot
+        .newOrder(symbol, side, type, options)
+        .then((res: any) => (data = res.data))
+        .catch((error: Error) => console.error(error));
       console.info("BinanceTradeService: setNewOrder: Ordered", data);
+
       return data;
     } catch (error) {
       handleError("BinanceTradeService: setNewOrder", error);

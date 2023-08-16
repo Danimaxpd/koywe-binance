@@ -1,7 +1,7 @@
+import { PrismaClient } from "@prisma/client";
 const { WebsocketStream, WebsocketAPI } = require("@binance/connector");
 import { env } from "../helpers/global_const";
 import { HistoryMarketData } from "../interfaces/strategies";
-import { PrismaClient } from "@prisma/client";
 import {
   BinanceWebSocketServiceInterface,
   tradesStreamConnectRequestQuery,

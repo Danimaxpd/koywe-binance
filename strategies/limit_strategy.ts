@@ -19,10 +19,13 @@ export class LimitStrategy implements Strategy {
     const price = parseFloat(data.result[0].price) * 0.98; // 2% below current price
     const orderParameters: OrderParameters = {
       type: "LIMIT",
+      side: "BUY",
       symbol,
-      timeInForce: "GTC",
-      quantity: data.quantity || 1,
-      price: price,
+      options: {
+        timeInForce: "GTC",
+        quantity: data.quantity || 1,
+        price: price,
+      },
     };
     return orderParameters;
   }

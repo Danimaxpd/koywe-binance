@@ -1,21 +1,28 @@
+import { PrismaClient } from "@prisma/client";
+import { env } from "../helpers/global_const";
 import StrategySelector from "../strategies/";
 import { HistoryMarketData, Strategy } from "../interfaces/strategies";
+import BinanceTradeService from "../services/binance_trade_service";
+import { handleError } from "../helpers/handle_errors";
 import {
   BinanceTradeServiceInterface,
   NewOrderRequestBody,
 } from "../interfaces/binance_trade_service";
-import BinanceTradeService from "../services/binance_trade_service";
-import { env } from "../helpers/global_const";
-import { handleError } from "../helpers/handle_errors";
 
 export class TradingBot {
   private strategySelector: StrategySelector;
   private binanceTradeService!: BinanceTradeServiceInterface;
   private symbol: string = "";
+  private _prismaCl: PrismaClient;
 
-  constructor(strategies: Strategy[], Symbol: string) {
+  constructor(
+    strategies: Strategy[],
+    Symbol: string,
+    prismaClient: PrismaClient
+  ) {
     this.strategySelector = new StrategySelector(strategies);
     this.symbol = Symbol;
+    this._prismaCl = prismaClient;
   }
 
   private initBinanceTradeService() {
@@ -29,10 +36,10 @@ export class TradingBot {
     }
   }
 
-  public executeTrade(data: HistoryMarketData) {
+  public async executeTrade(data: HistoryMarketData) {
     try {
       const { strategy, score } = this.strategySelector.selectStrategy(data);
-      console.log(
+      console.info(
         `Selected strategy: ${strategy.constructor.name} with score: ${score}`
       );
 
@@ -42,10 +49,18 @@ export class TradingBot {
         this.symbol
       ) as NewOrderRequestBody;
       this.initBinanceTradeService();
+      console.log("orderParameters-->>", orderParameters);
       this.binanceTradeService.setNewOrder(orderParameters);
-      console.log(`Order executed with parameters: `, orderParameters);
+      await this._prismaCl.trades.create({
+        data: {
+          timestamp: Date.now().toString(),
+          // @ts-ignore
+          rawData: orderParameters,
+        },
+      });
+      console.info(`Order executed with parameters: `, orderParameters);
     } catch (error) {
-      handleError("TradingBot: Failed to execute trade", error);
+      console.error(error);
     }
   }
 }
