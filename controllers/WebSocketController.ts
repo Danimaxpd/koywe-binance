@@ -89,11 +89,19 @@ export class webSocketController {
 
   async runTradingBot(request: FastifyRequest, reply: FastifyReply) {
     try {
-      const { symbols } = request.query as { symbols: [string] };
+      const { symbols: symbolStr } = request.query as { symbols: string };
+
+      if (!symbolStr) {
+        return reply.status(400).send("Symbols query parameter is required.");
+      }
+
+      const symbols = symbolStr.split(",");
       const marketData =
         await this._binanceWebSocketService.getHistoricalData();
 
-      for (const symbol of symbols) {
+      for (let i = 0; i < symbols.length; i++) {
+        const symbol = symbols[i];
+        console.info("SYMBOL: ", symbol);
         const bot = new TradingBot(strategies, symbol);
         bot.executeTrade(marketData);
       }
