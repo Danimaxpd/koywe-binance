@@ -1,7 +1,7 @@
 {
-  "name": "src",
+  "name": "koywe-binance-danimaxpd",
   "version": "1.0.0",
-  "description": "This project was bootstrapped with Fastify-CLI.",
+  "description": "A danimaxpd project code challenge for Koywe",
   "main": "app.ts",
   "directories": {
     "test": "test"
@@ -14,8 +14,8 @@
     "dev": "npm run build:ts && concurrently -k -p \"[{name}]\" -n \"TypeScript,App\" -c \"yellow.bold,cyan.bold\" \"npm:watch:ts\" \"npm:dev:start\"",
     "dev:start": "fastify start --ignore-watch=.ts$ -w -l info -P dist/app.js"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": ["binance", "fastify", "typescript"],
+  "author": "danimaxpd",
   "license": "ISC",
   "dependencies": {
     "@binance/connector": "^3.0.0-rc.2",
