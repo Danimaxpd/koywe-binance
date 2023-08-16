@@ -1,19 +1,20 @@
+import { PrismaClient } from "@prisma/client";
+import { SocketStream } from "@fastify/websocket";
 import { FastifyRequest, FastifyReply } from "fastify";
 import BinanceWebSocketService from "../services/binance_websocket_service";
+import { TradingBot } from "../observers/trading-bot";
+import { strategies } from "../strategies/index";
 import {
   BinanceWebSocketServiceInterface,
   tradesStreamConnectRequestQuery,
-  getHistoricalDataRequestQuery,
   fetchHistoricalTradesRequestQuery,
 } from "../interfaces/binance_web_socket_service";
-import { TradingBot } from "../observers/trading-bot";
-import { strategies } from "../strategies/index";
 
 export class webSocketController {
   private _binanceWebSocketService!: BinanceWebSocketServiceInterface;
 
-  constructor() {
-    this._binanceWebSocketService = new BinanceWebSocketService();
+  constructor(prismaClient: PrismaClient) {
+    this._binanceWebSocketService = new BinanceWebSocketService(prismaClient);
   }
 
   async getTradesStreamConnect(request: FastifyRequest, reply: FastifyReply) {
@@ -38,38 +39,68 @@ export class webSocketController {
 
   async getHistoricalData(request: FastifyRequest, reply: FastifyReply) {
     try {
-      const result = this._binanceWebSocketService.getHistoricalData(
-        request.query as getHistoricalDataRequestQuery
-      );
-      reply.status(200).send(result);
+      reply
+        .status(200)
+        .send(await this._binanceWebSocketService.getHistoricalData());
     } catch (error) {
       reply.status(400).send(error);
     }
   }
 
-  fetchHistoricalTrades(request: FastifyRequest, reply: FastifyReply) {
+  async fetchHistoricalTrades(
+    connection: SocketStream,
+    request: FastifyRequest
+  ) {
+    // Error handling function to avoid duplication
+    const handleError = (err: Error) => {
+      console.error("fetchHistoricalTrades Error:", err);
+      connection.socket.send(
+        `An error occurred while processing your request. ${err}`
+      );
+      connection.socket.close();
+    };
+
     try {
-      const result = this._binanceWebSocketService.fetchHistoricalTrades(
-        request.query as fetchHistoricalTradesRequestQuery
+      const requestQuery = request.query as fetchHistoricalTradesRequestQuery;
+      const result = await this._binanceWebSocketService.fetchHistoricalTrades(
+        requestQuery
       );
 
-      reply.status(200).send(result);
+      // @ts-ignore type error in fastify-websocket library
+      connection.socket.send(result);
+
+      connection.socket.on("error", console.error);
+
+      connection.socket.on("message", async () => {
+        try {
+          connection.socket.send("Data retrieved from the database");
+          const dbData =
+            await this._binanceWebSocketService.getHistoricalData();
+          // @ts-ignore type error in fastify-websocket library
+          connection.socket.send(dbData);
+        } catch (innerError) {
+          handleError(innerError as Error);
+        }
+      });
     } catch (error) {
-      reply.status(400).send(error);
+      handleError(error as Error);
     }
   }
 
   async runTradingBot(request: FastifyRequest, reply: FastifyReply) {
     try {
-      const marketData = this._binanceWebSocketService.getHistoricalData(
-        request.query as getHistoricalDataRequestQuery
-      );
-      // @ts-ignore
-      const symbol = request.query.symbol;
+      const { symbols } = request.query as { symbols: [string] };
+      const marketData =
+        await this._binanceWebSocketService.getHistoricalData();
 
-      const bot = new TradingBot(strategies, symbol);
-      bot.executeTrade(marketData);
-      reply.status(200).send("Executed Trading Bot");
+      for (const symbol of symbols) {
+        const bot = new TradingBot(strategies, symbol);
+        bot.executeTrade(marketData);
+      }
+
+      reply
+        .status(200)
+        .send("Executing Trading Bot for each symbol, check logs for details");
     } catch (error) {
       reply.status(500).send(error);
     }

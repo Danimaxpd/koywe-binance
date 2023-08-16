@@ -1,14 +1,14 @@
 import { FastifyPluginAsync } from "fastify";
 import { webSocketController } from "../../../controllers/WebSocketController";
 
-const WebSocketController = new webSocketController();
-
 const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
-  fastify.get("/tradesStreamConnect", async (request, reply) => {
+  const WebSocketController = new webSocketController(fastify.prisma);
+
+  fastify.get("/tradesStreamConnect", (request, reply) => {
     WebSocketController.getTradesStreamConnect(request, reply);
   });
 
-  fastify.get("/tradesStreamDisconnect", async (request, reply) => {
+  fastify.get("/tradesStreamDisconnect", (request, reply) => {
     WebSocketController.getTradesStreamDisconnect(reply);
   });
 
@@ -16,12 +16,16 @@ const routes: FastifyPluginAsync = async (fastify, opts): Promise<void> => {
     WebSocketController.getHistoricalData(request, reply);
   });
 
-  fastify.get("/fetchHistoricalTrades", (request, reply) => {
-    WebSocketController.fetchHistoricalTrades(request, reply);
-  });
+  fastify.get(
+    "/fetchHistoricalTrades",
+    { websocket: true },
+    (connection, request) => {
+      WebSocketController.fetchHistoricalTrades(connection, request);
+    }
+  );
 
-  fastify.get("/runTradingBot", async (request, reply) => {
-    await WebSocketController.runTradingBot(request, reply);
+  fastify.get("/runTradingBot", (request, reply) => {
+    WebSocketController.runTradingBot(request, reply);
   });
 };
 

@@ -17,9 +17,9 @@ export interface BinanceWebSocketServiceInterface {
   tradesStreamConnect(
     requestQuery: tradesStreamConnectRequestQuery
   ): typeof WebsocketStream;
+  getHistoricalData(): Promise<HistoryMarketData>;
   tradesStreamDisconnect(): void;
-  getHistoricalData(
-    requestQuery: getHistoricalDataRequestQuery
-  ): HistoryMarketData;
-  fetchHistoricalTrades(requestQuery: fetchHistoricalTradesRequestQuery): void;
+  fetchHistoricalTrades(
+    requestQuery: fetchHistoricalTradesRequestQuery
+  ): Promise<void>;
 }
