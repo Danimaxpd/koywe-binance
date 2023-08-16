@@ -76,7 +76,7 @@ export default class BinanceWebSocketService
       },
     });
     // @ts-ignore Prisma don't have custom types for the moment - https://www.npmjs.com/package/prisma-json-types-generator This project should be a temporary workaround
-    return dbData.rawData;
+    return JSON.parse(dbData.rawData);
   }
 
   /**
